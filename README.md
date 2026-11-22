@@ -43,3 +43,7 @@ Adaptations à tcc (le reste est la source d'origine) :
     rcsh essai.rc < NUL
 
 Installation : remplacer `C:\9pm\bin\rcsh.exe` par `rcsh.exe` (les rcsh enfants sont lancés depuis `%9pm%\bin`) et `C:\9pm\lib\rcmain` par `lib/rcmain`.
+
+## Support
+
+Dépôt publié tel quel, pour nos propres besoins : pas de support, les issues et pull requests ne sont pas suivies.
