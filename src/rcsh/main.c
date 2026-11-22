@@ -82,6 +82,8 @@ main(int argc, char *argv[])
 	pushlist();
 	for(i=argc-1;i>=0;i--)
 		pushword(argv[i]);
+	/* fonctions de l'environnement, définies avant rcmain et le script */
+	vinitfn();
 
 	for(;;){
 		if(flag['r']) pfnc(err, runq);

@@ -154,6 +154,7 @@ void	panic(char*, int);
 /* var.c */
 void	kinit(void);
 void	vinit(void);
+void	vinitfn(void);
 Var	*vlook(char*);
 Var	*gvlook(char*);
 Var	*newvar(char*, Var*);

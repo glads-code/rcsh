@@ -40,6 +40,21 @@ kenter(int type, char *name)
 	kw[h]=p;
 }
 
+/* fonctions héritées de l'environnement (fn#nom), en attente de vinitfn() */
+static Io	*fnenv[512];
+static int	nfnenv;
+
+void
+vinitfn(void)
+{
+	int i;
+
+	/* la dernière empilée s'exécute en premier : ordre de l'environnement */
+	for(i=nfnenv-1; i>=0; i--)
+		execcmds(fnenv[i]);
+	nfnenv = 0;
+}
+
 void
 vinit(void)
 {
@@ -75,9 +90,13 @@ vinit(void)
 			setvar(name, w);
 			vlook(name)->changed=0;
 		} else {
-			/* function */
+			/*
+			 * function : lue maintenant, définie par vinitfn() une fois
+			 * l'interpréteur démarré (runq est encore nul ici)
+			 */
 			f = opencore(val, n);
-			execcmds(f);
+			if(nfnenv < nelem(fnenv))
+				fnenv[nfnenv++] = f;
 		}
 	}
 /* fprint(2, "vinit done\n"); */
