@@ -146,7 +146,7 @@ Xbackq(void)
 	updenv();
 
 	argv = rcargv(runq->code[runq->pc].s);
-	pid = proc(argv, -1, pfd[1], 2, 0);
+	pid = proc(argv, mapfd(0), pfd[1], mapfd(2), 0);	/* entrée héritée, comme dans rc */
 	free(argv);
 
 	close(pfd[1]);
@@ -512,7 +512,7 @@ Xpipe(void)
 	updenv();
 
 	argv = rcargv(runq->code[pc+2].s);
-	pid = proc(argv, 0, pfd[1], 2, 0);
+	pid = proc(argv, mapfd(0), pfd[1], mapfd(2), 0);
 	free(argv);
 	close(pfd[1]);
 

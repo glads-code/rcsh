@@ -27,6 +27,9 @@ x=`{f b}
 if(! ~ $"x 'dans-f b') ko fonction-dans-capture
 x=`{echo a b c}
 if(! ~ $#x 3) ko capture
+# une capture lit l'entrée standard du script, comme dans rc
+x=`{echo 'l1 l2' | { z=`{cat}; echo $#z }}
+if(! ~ $"x 2) ko capture-entree
 $sh -c 'exit zz'
 if(~ $status '') ko exit
 # flag e ne vaut que pour les lignes lues ensuite : script de trois lignes
