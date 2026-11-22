@@ -22,12 +22,12 @@ rwx(long m, char *s)
 }
 
 int
-dirmodeconv(va_list *arg, Fconv *f)
+dirmodeconv(void *arg, Fconv *f)
 {
 	static char buf[16];
 	ulong m;
 
-	m = va_arg(*arg, ulong);
+	m = va_arg(*(va_list*)arg, ulong);
 
 	if(m & CHDIR)
 		buf[0]='d';

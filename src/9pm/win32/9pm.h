@@ -107,7 +107,8 @@ int	secwperm(Rune *path, Dir *d, int);
 
 extern int	pm_assert(int);
 
-extern	_declspec(thread) Thread	*CT;
+Thread	**pm_ctslot(void);
+#define CT (*pm_ctslot())
 extern	int	useunicode, usesecurity;
 extern	int	tmpconsole;
 extern	char	*pm_root;

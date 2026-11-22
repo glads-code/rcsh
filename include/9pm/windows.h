@@ -18,11 +18,15 @@
 
 #include <windows.h>
 #include <lm.h>
+#ifdef __TINYC__
+#include <winnetwk.h>
+#endif
 
 #undef Rectangle
 #undef accept
 #undef listen
 
+#ifndef __TINYC__	/* tcc : les macros Unicode de windows.h suffisent (W directement) */
 /*
  * undo microsoft's macros for Unicode functions in win library
  */
@@ -205,6 +209,8 @@ SOCKET PASCAL WSASocket(int af, int type, int protocol, LPWSAPROTOCOL_INFO lpPro
 BOOL WINAPI WriteConsole(HANDLE hConsoleOutput, CONST VOID *lpBuffer,
 			DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 VOID WINAPI OutputDebugString(LPCWSTR lpOutputString);
+
+#endif	/* __TINYC__ */
 
 extern	char	*win_error(char*, int);
 extern	int	win_hasunicode(void);

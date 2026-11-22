@@ -1,0 +1,34 @@
+#!/usr/bin/env rc
+# Compile rcsh.exe (Windows, 32 bits) sur deb avec le tcc croisé
+# i386-win32 : rcsh et la bibliothèque de 9pm liés en un seul exécutable,
+# sans 9pm2.dll. Le résultat, rcsh.exe, remplace celui de 9pm (voir README).
+# Usage : ./compiler.rc [dossier des sources de tinycc]
+flag e +
+if(test -d /usr/lib/plan9/bin) path=(/usr/lib/plan9/bin $path)
+cd `{basename -d $0}
+t=$HOME/.cache/wak-src/tinycc
+if(~ $#* 1) t=$1
+if(! test -x $t/i386-win32-tcc.exe){echo 'tcc croisé absent : voir README' >[1=2]; exit tcc}
+fn cc { $t/i386-win32-tcc.exe -B$t/win32 -I$t/include '-D__int64=long long' -Iinclude -Itcc -w -c $* }
+o=obj
+rm -rf $o
+mkdir $o
+# bibliothèque de 9pm : fichiers du mkfile de 9pm2.dll, plus memmove,
+# memset et strstr que fournissait sa c.lib
+w32=(thread lock qlock queue main fd env time proc sec crt dll frexp tas)
+port=(access doprint print malloc event qsort atexit convM2D convD2M)
+port=($port werrstr dirfstat dirwstat dirstat dirread perror dirmodeconv mktemp)
+port=($port readn abs asin atan atof atol charstod cleanname ctime ctype exp fabs)
+port=($port floor fmod getfields log memccpy memchr memcmp memcpy nan pow pow10)
+port=($port rand ref rune sin sinh sqrt strcat strncat strchr strcmp strcpy strdup)
+port=($port strlen strncmp strecpy strncpy strpbrk strrchr strtod strtol strtoul)
+port=($port tan tanh tokenize toupper utflen utfrrune utfrune utftowstr utfutf)
+port=($port wstrcat wstrchr wstrcmp wstrcpy wstrdup wstrecpy wstrlen wstrncat)
+port=($port wstrncmp wstrncpy wstrrchr wstrtoutf wstrutflen memmove memset strstr)
+for(f in $w32) cc src/9pm/win32/$f.c -o $o/$f.o
+for(f in $port) cc src/9pm/port/$f.c -o $o/$f.o
+cc tcc/win.c -o $o/win.o
+for(f in src/rcsh/*.c) cc $f -o $o/r-`{basename $f .c}^.o
+$t/i386-win32-tcc.exe -B$t/win32 -nostdlib -Wl,-entry'='mainCRTStartup -Ltcc -o rcsh.exe $o/*.o -lkernel32 -luser32 -ladvapi32 -lgdi32 -lmpr $t/i386-win32-libtcc1.a
+rm -rf $o
+echo compilé : rcsh.exe

@@ -8,6 +8,7 @@ char *argv0;
 extern int	main(int, char*[]);
 
 extern void	pm_argv0(char*);
+extern BOOL WINAPI	DllMain(HANDLE, DWORD, LPVOID);
 
 static int	args(char *argv[], int n, char *p);
 
@@ -18,6 +19,10 @@ mainCRTStartup(void)
 	char *arg, *p, **argv;
 	Rune *warg;
 
+#ifdef __TINYC__
+	/* bibliothèque liée dans l'exécutable : pas de chargement de DLL */
+	DllMain(0, DLL_PROCESS_ATTACH, 0);
+#endif
 	win_useunicode = win_hasunicode();
 
 	warg = GetCommandLine();

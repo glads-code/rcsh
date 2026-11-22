@@ -20,7 +20,23 @@ struct Ttbl {
 	Thread	*free;
 };
 
-_declspec(thread)       Thread *CT;
+/* tcc ne connaît pas _declspec(thread) : CT passe par TlsAlloc */
+static DWORD	ctidx = TLS_OUT_OF_INDEXES;
+
+Thread **
+pm_ctslot(void)
+{
+	Thread **p;
+
+	if(ctidx == TLS_OUT_OF_INDEXES)
+		ctidx = TlsAlloc();
+	p = TlsGetValue(ctidx);
+	if(p == 0) {
+		p = LocalAlloc(LPTR, sizeof *p);
+		TlsSetValue(ctidx, p);
+	}
+	return p;
+}
 
 static Ttbl	tt;
 
