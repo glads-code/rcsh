@@ -43,6 +43,13 @@ main(int argc, char *argv[])
 
 	kinit();
 	vinit();
+	/*
+	 * sous-shell (-S : capture, tube) : rcmain refait de $0 une variable
+	 * locale ; $rcsh0 lui rend la valeur héritée du script, comme le
+	 * fork du rc de Plan 9
+	 */
+	if(flag['S'] && gvlook("0")->val)
+		setvar("rcsh0", copywords(gvlook("0")->val, 0));
 
 	consonintr(dointr);
 

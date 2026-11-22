@@ -11,6 +11,7 @@ if(~ $rcname v.out) prompt=('broken! ' '	')
 if(! ~ $#cflag 0){
 	if(flag l && /bin/test -r $home/lib/profile) . $home/lib/profile
 	status=''
+	if(! ~ $#rcsh0 0) 0=$rcsh0
 	eval $cflag
 }
 if not if(flag i){
