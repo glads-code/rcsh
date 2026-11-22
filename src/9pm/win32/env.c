@@ -37,13 +37,31 @@ envinit(void)
 
 	envload();
 
+	/*
+	 * path : chemin de recherche des commandes, tiré de Path (ou PATH)
+	 * de Windows s'il manque, même quand 9pm est déjà défini (sinon
+	 * seules les commandes de $9pm/bin sont trouvées)
+	 */
+	path = getenv("path");
+	if(path == 0)
+		path = getenv("Path");
+	if(path == 0)
+		path = getenv("PATH");
+	if(path) {
+		putenv("path", path);
+		free(path);
+	}
+
 	pm_root = getenv("9pm");
 	/* if 9pm is set then assume environment is ok */
 	if(pm_root)
 		return;
 
-	/* assume 9pm2.dll is in $9pm/bin */
+	/* assume 9pm2.dll is in $9pm/bin ; sans DLL (rcsh lié avec la
+	   bibliothèque), l'exécutable lui-même */
 	hm = GetModuleHandle(L"9pm2.dll");
+	if(hm == 0)
+		hm = GetModuleHandle(0);
 	if(hm == 0) {
 		winerror();
 		fatal("envinit: could not get handle to 9pm2.dll");
@@ -76,14 +94,6 @@ envinit(void)
 		fatal("envinit: bad system name");
 	wstrtoutf(sysname, buf, sizeof(sysname));
 	putenv("sysname", sysname);
-
-	path = getenv("path");
-	if(path == 0)
-		path = getenv("Path");
-	if(path == 0)
-		path = getenv("PATH");
-	putenv("path", path);
-	free(path);
 
 	timezoneinit();
 }
