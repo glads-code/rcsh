@@ -339,7 +339,7 @@ fdexport(int fd)
 	switch(f->type) {
 	default:
 		qunlock(&f->lk);
-		errstr("invalid stdio fd");
+		werrstr("invalid stdio fd");
 		return INVALID_HANDLE_VALUE;
 	case Tfile:
 	case Tpipe:
