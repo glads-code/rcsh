@@ -112,7 +112,7 @@ Xasync(void)
 	updenv();
 
 	argv = rcargv(runq->code[runq->pc].s);
-	pid = proc(argv, -1, 1, 2, 0);
+	pid = proc(argv, -1, mapfd(1), mapfd(2), 0);
 	free(argv);
 
 	if(pid == 0) {
@@ -713,7 +713,7 @@ Xsubshell(void)
 	updenv();
 
 	argv = rcargv(runq->code[runq->pc].s);
-	pid = proc(argv, -1, 1, 2, 0);
+	pid = proc(argv, mapfd(0), mapfd(1), mapfd(2), 0);	/* @{…} : redirections en cours, comme dans rc */
 	free(argv);
 
 	if(pid == 0) {
