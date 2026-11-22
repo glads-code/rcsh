@@ -13,6 +13,10 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 - **`errstr` sur une chaîne littérale** (`proc.c`) : écrivait dans une constante, en mémoire en lecture seule avec tcc ; plantait un enfant lancé sans entrée standard (toute capture).
 
 - **Commandes de Windows introuvables** (`src/9pm/win32/env.c`) : quand `9pm` était défini, la bibliothèque ne recopiait pas le `Path` de Windows dans `path`, où rcsh cherche les commandes : seules celles de `$9pm/bin` étaient trouvées (ni `certutil`, ni le `tar` de Windows). Sans `9pm` défini, elle déduit maintenant son dossier de l'exécutable s'il n'y a pas de `9pm2.dll`.
+- **Scripts lancés par leur nom** (`proc.c`) : seule l'extension `.rcs` désignait un script rc. Un script `.rc` (`./scripts/contours.rc`) était lancé comme un programme Windows et échouait, un script sans extension (`tri-mails`) n'était pas trouvé. Les deux passent par rcsh, avec un `$0` écrit avec des `/` (`basename -d $0` donne son dossier).
+- **Commande introuvable** (`simple.c`) : rcsh affichait l'erreur sans changer le statut ; `flag e` ne s'arrêtait pas et le script continuait comme si de rien n'était.
+- **`$0` dans les sous-shells** (`main.c`, `lib/rcmain`) : une capture ou un côté de tube relisait `rcmain`, qui fixait `$0` sur lui-même ; `` `{basename -d $0} `` donnait le dossier de 9pm. Le sous-shell (`-S`) garde le `$0` du script.
+- **Redirections** (`exec.c`) : captures, côtés de tubes et sous-shells `@{…}` héritent de l'entrée du script et des redirections en cours (`{ … } > fichier`), comme dans rc ; `` x=`{cat} `` lisait rien, et la sortie d'un `@{…}` échappait au fichier.
 
 `flag e` et le code de sortie (`exit`, échec d'une commande) fonctionnaient déjà.
 
@@ -34,8 +38,8 @@ Adaptations à tcc (le reste est la source d'origine) :
 
 ## Vérifier et installer
 
-`essai.rc` vérifie ce dont nos scripts dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur 8 points avec celui de 9pm (dont les blocs `ifs=… {…}` de tri-mails, victimes du même plantage que les fonctions).
+`essai.rc` vérifie ce dont nos scripts dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec celui de 9pm (dont les blocs `ifs=… {…}` de tri-mails, victimes du même plantage que les fonctions).
 
     rcsh essai.rc < NUL
 
-Installation : remplacer `C:\9pm\bin\rcsh.exe` par `rcsh.exe` (les rcsh enfants sont lancés depuis `%9pm%\bin`).
+Installation : remplacer `C:\9pm\bin\rcsh.exe` par `rcsh.exe` (les rcsh enfants sont lancés depuis `%9pm%\bin`) et `C:\9pm\lib\rcmain` par `lib/rcmain`.

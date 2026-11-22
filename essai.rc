@@ -12,7 +12,7 @@ fn f { echo dans-f $* }
 test -f absent | cat
 if(! ~ $status ?*'|') ko tube-gauche
 echo x | test -f absent
-if(! ~ $status '|'?*) ko tube-droit
+if(! ~ $status *'|'?*) ko tube-droit
 echo x | cat > essai.tmp
 if(! ~ $status '|') ko tube-reussi
 vus=()
@@ -30,6 +30,10 @@ if(! ~ $#x 3) ko capture
 # une capture lit l'entrée standard du script, comme dans rc
 x=`{echo 'l1 l2' | { z=`{cat}; echo $#z }}
 if(! ~ $"x 2) ko capture-entree
+# redirection d'un bloc : vaut aussi pour ses tubes et sous-shells @{…}
+{ echo a; echo b | cat; @{ echo c } } > essai.tmp
+x=`{cat essai.tmp}
+if(! ~ $"x 'a b c') ko redirection-bloc
 $sh -c 'exit zz'
 if(~ $status '') ko exit
 # flag e ne vaut que pour les lignes lues ensuite : script de trois lignes
@@ -55,7 +59,28 @@ fn h {
 y=()
 h
 if(! ~ $#y 2) ko ifs-bloc
-rm -f essai.tmp essai-e.tmp
+# commande introuvable : un échec
+commande-introuvable-essai >[2=1] > essai.tmp
+if(~ $status '') ko commande-absente
+# script .rc et script sans extension lancés par leur nom
+echo '#!/usr/bin/env rc' > essai-s.rc
+echo 'echo par-nom $1' >> essai-s.rc
+cp essai-s.rc essai-sx
+chmod +x essai-s.rc essai-sx
+x=`{./essai-s.rc a}
+if(! ~ $"x 'par-nom a') ko script-rc
+x=`{./essai-sx b}
+if(! ~ $"x 'par-nom b') ko script-sans-extension
+# $0 d'un script lancé par son nom : basename -d donne son dossier
+mkdir -p essai-dossier
+echo '#!/usr/bin/env rc' > essai-dossier/d.rc
+echo 'if(test -d /usr/lib/plan9/bin) path=(/usr/lib/plan9/bin $path)' >> essai-dossier/d.rc
+echo 'cd `{basename -d $0}; if(test -f d.rc) echo dossier-ok' >> essai-dossier/d.rc
+chmod +x essai-dossier/d.rc
+x=`{./essai-dossier/d.rc}
+if(! ~ $"x dossier-ok) ko dossier-du-script
+rm -rf essai-dossier
+rm -f essai.tmp essai-e.tmp essai-s.rc essai-sx
 
 if(! ~ $#echecs 0){ echo $#echecs échec'(s)' : $echecs >[1=2]; exit essai }
 echo essai réussi
