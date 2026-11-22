@@ -102,7 +102,7 @@ Il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des poin
 
     rcsh essai.rc < NUL
 
-Limite connue : `commande > fichier >[2=1]` échoue (« null list in concatenation ») ; écrire stderr dans un fichier à part (`>[2]erreurs`).
+Limite connue : dans une capture `` `{…} `` ou un sous-shell `@{…}`, une commande redirigée avec `>[2=1]` (dans un ordre comme dans l'autre) puis suivie de `||` fait revenir la capture vide : `` x=`{cmd > f >[2=1] || echo refus} `` laisse `x` vide au lieu de `refus`. Hors capture, ou sans `||`, `>[2=1]` fonctionne comme sous Linux. Contournement : écrire stderr dans un fichier à part (`>[2]erreurs`).
 
 ## Support
 
