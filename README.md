@@ -22,27 +22,54 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 
 ## Installer sous Windows
 
-rcsh remplace celui de 9pm, à installer d'abord :
+rcsh remplace celui de 9pm, à installer d'abord. Dans PowerShell :
 
-1. Télécharger [9pm051031.zip](https://9p.io/sources/extra/9pm051031.zip) et vérifier son empreinte (PowerShell) : `(Get-FileHash 9pm051031.zip).Hash` doit donner `9E9281BA379EFDE3E94666E4358D9959971AF9956416D2C858905F9B3E308DD3`.
-2. Extraire l'archive dans `C:\9pm` et ajouter `C:\9pm\bin` au `PATH` de l'utilisateur.
-3. Conseillé : renommer `C:\9pm\bin\tar.exe` en `9tar.exe` (il masque le `tar.exe` de Windows) et copier `9sort.exe` en `sort.exe` (sinon `sort` est celui de Windows).
+```powershell
+cd $env:USERPROFILE
+# https échoue depuis Windows sur 9p.io (TLS) : http, avec vérification de l'empreinte
+curl.exe -LO http://9p.io/sources/extra/9pm051031.zip
+(Get-FileHash 9pm051031.zip).Hash   # 9E9281BA379EFDE3E94666E4358D9959971AF9956416D2C858905F9B3E308DD3
+tar -xf 9pm051031.zip -C C:\        # donne C:\9pm
+$p = [Environment]::GetEnvironmentVariable('Path', 'User')
+[Environment]::SetEnvironmentVariable('Path', "C:\9pm\bin;$p", 'User')
+# conseillé : sinon tar et sort sont ceux de 9pm et masquent ceux de Windows
+Rename-Item C:\9pm\bin\tar.exe 9tar.exe
+Copy-Item C:\9pm\bin\9sort.exe C:\9pm\bin\sort.exe
+```
 
-Compiler `rcsh.exe` sous Debian 13 (32 bits, bibliothèque de 9pm liée dedans, sans `9pm2.dll`). Le tcc croisé se construit une fois depuis les sources de tinycc (dossier attendu par défaut par les scripts : `~/.cache/wak-src/tinycc`, autre dossier en argument) :
+Puis compiler `rcsh.exe` (32 bits, bibliothèque de 9pm liée dedans, sans `9pm2.dll`) avec tcc (voir ci-dessous pour l'installer) et l'installer :
 
-    sudo apt install git gcc make 9base
-    git clone https://repo.or.cz/tinycc.git ~/.cache/wak-src/tinycc
-    cd ~/.cache/wak-src/tinycc
-    ./configure --targetos=WIN32 --cpu=x86_64 --enable-cross
-    make cross-x86_64-win32 cross-i386-win32
+```powershell
+curl.exe -Lo rcsh.zip https://github.com/glads-code/rcsh/archive/refs/heads/main.zip
+tar -xf rcsh.zip
+cd rcsh-main
+powershell -ExecutionPolicy Bypass -File compiler.ps1 C:\tcc-dev
+Move-Item -Force rcsh.exe C:\9pm\bin\rcsh.exe    # les rcsh enfants sont lancés depuis C:\9pm\bin
+Copy-Item -Force lib\rcmain C:\9pm\lib\rcmain
+```
 
-Puis :
+Vérifier, dans une nouvelle fenêtre (pour le `PATH`), dans le dossier du dépôt : `cmd /c "rcsh essai.rc < NUL"` affiche `essai réussi`. Le `rcsh.exe` doit avoir quitté le dossier du dépôt : sinon cmd lance celui-là, qui ne trouve pas `rcmain`.
 
-    git clone https://github.com/glads-code/rcsh.git
-    cd rcsh
-    ./compiler.rc
+### Installer tcc sous Windows
 
-Sous Windows, remplacer `C:\9pm\bin\rcsh.exe` par ce `rcsh.exe` (les rcsh enfants sont lancés depuis le `bin` de 9pm) et `C:\9pm\lib\rcmain` par `lib/rcmain` du dépôt. Vérifier dans le dépôt : `rcsh essai.rc < NUL`.
+Le tcc officiel pour Windows (0.9.27, 2017) est trop ancien pour ces sources (il lui manque `unistd.h`, entre autres) : il sert seulement à compiler un tcc récent, depuis les sources de tinycc. Dans PowerShell :
+
+```powershell
+cd $env:USERPROFILE
+# 1. tcc 0.9.27 officiel
+curl.exe -LO https://download.savannah.gnu.org/releases/tinycc/tcc-0.9.27-win64-bin.zip
+(Get-FileHash tcc-0.9.27-win64-bin.zip).Hash   # 34A721949A2583FDFF725312DA092FA0F5F1F284B702E6F811C6954714FAABB2
+tar -xf tcc-0.9.27-win64-bin.zip -C C:\
+# il ne déclare pas cette fonction, dont le tcc récent a besoin
+Add-Content C:\tcc\lib\kernel32.def AddVectoredExceptionHandler
+# 2. tcc récent (version vérifiée : commit fc1fc50), installé dans C:\tcc-dev
+curl.exe -Lo tinycc.tar.gz https://repo.or.cz/tinycc.git/snapshot/fc1fc50f7a5b3151a8932e9c2adb784140306db4.tar.gz
+tar -xzf tinycc.tar.gz
+cd tinycc-fc1fc50\win32
+cmd /c "build-tcc.bat -c C:\tcc\tcc.exe -i C:\tcc-dev"            # tcc.exe, 64 bits
+cmd /c "build-tcc.bat -c C:\tcc\tcc.exe -i C:\tcc-dev -x i386"    # i386-win32-tcc.exe, 32 bits (pour rcsh)
+C:\tcc-dev\tcc.exe -v   # tcc version 0.9.28rc (x86_64 Windows)
+```
 
 ## Debian 13
 
@@ -50,7 +77,7 @@ Rien à installer : le rc de Plan 9 est dans le paquet `9base` (`sudo apt instal
 
 ## Compilation
 
-Adaptations à tcc (le reste est la source d'origine) :
+`compiler.ps1` compile les sources avec `i386-win32-tcc.exe`. Adaptations à tcc (le reste est la source d'origine) :
 - `tcc/` : `lm.h` et `winnetwk.h` (parties utilisées, absentes des en-têtes de tcc), `win.c` (remplace la bibliothèque `win` de 9pm, qui choisissait entre fonctions Unicode et ANSI : Unicode seul), `advapi32.def` et `mpr.def` (tirés des DLL 32 bits de Windows 11 par `tcc -impdef`).
 - `include/9pm/windows.h` : redéclarations des fonctions Windows réservées au compilateur de Microsoft.
 - `thread.c`, `9pm.h` : variable par thread (`CT`) par `TlsAlloc`, tcc n'ayant pas `__declspec(thread)`.
@@ -62,6 +89,8 @@ Adaptations à tcc (le reste est la source d'origine) :
 `essai.rc` vérifie ce dont des scripts rc portables dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec celui de 9pm (dont les blocs `ifs=… {…}`, victimes du même plantage que les fonctions).
 
     rcsh essai.rc < NUL
+
+Limite connue : la redirection `>[2=1]` échoue (« null list in concatenation ») ; rediriger stderr vers un fichier (`>[2]fichier`).
 
 ## Support
 
