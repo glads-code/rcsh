@@ -79,9 +79,11 @@ Xsimple(void)
 		pid = proc(argv, mapfd(0), mapfd(1), mapfd(2), 0);
 		free(argv);
 
-		if(pid == 0)
+		if(pid == 0) {
 			pfmt(err, "%s: %r\n", runq->argv->words->word);
-		else
+			/* commande non lancée : un échec, que flag e doit voir */
+			setstatus("not found");
+		} else
 			waitfor(pid);
 		poplist();
 #ifdef XXX
