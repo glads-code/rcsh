@@ -22,6 +22,8 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 
 ## Installer sous Windows
 
+Binaire prêt à l'emploi : `rcsh.exe` dans les [Releases](https://github.com/glads-code/rcsh/releases) (compilé sous Windows 11 selon la procédure ci-dessous, empreinte SHA-256 dans les notes de version). Le copier dans un dossier du `PATH` suffit (pour rcsh : dans `C:\9pm\bin`, avec `lib/rcmain`, voir ci-dessous). Pour le compiler soi-même :
+
 rcsh remplace celui de 9pm, à installer d'abord. Dans PowerShell :
 
 ```powershell
@@ -86,11 +88,21 @@ Rien à installer : le rc de Plan 9 est dans le paquet `9base` (`sudo apt instal
 
 ## Vérifier
 
-`essai.rc` vérifie ce dont des scripts rc portables dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec celui de 9pm (dont les blocs `ifs=… {…}`, victimes du même plantage que les fonctions).
+`essai.rc [shell]` vérifie le shell rc qui le lance. L'argument facultatif `shell` est le nom de ce shell, utilisé pour les points qui lancent un script à part (`rcsh` par défaut, `rc` sous Linux). Il affiche `essai réussi`, ou la liste des points en échec. Points vérifiés :
+
+- **Statut des tubes** : dans `a | b`, l'échec de `a` se voit dans `$status`.
+- **Fonctions et captures dans les sous-shells** : une fonction définie par le script marche à gauche d'un tube et dans `` `{…} ``.
+- **Redirections** : un bloc `{ … } > fichier` y envoie toute sa sortie, sous-shells compris.
+- **`flag e` et `exit`** : un script s'arrête à la première commande en échec, et son code de sortie est transmis.
+- **Bloc `ifs=… {…}`** dans une fonction, avec une capture : découpe bien par lignes.
+- **Scripts lancés par leur nom**, avec ou sans extension `.rc`, et `basename -d $0` qui donne leur dossier.
+- **Commande introuvable** : comptée comme un échec.
+
+Il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec le rcsh d'origine de 9pm.
 
     rcsh essai.rc < NUL
 
-Limite connue : la redirection `>[2=1]` échoue (« null list in concatenation ») ; rediriger stderr vers un fichier (`>[2]fichier`).
+Limite connue : `commande > fichier >[2=1]` échoue (« null list in concatenation ») ; écrire stderr dans un fichier à part (`>[2]erreurs`).
 
 ## Support
 
