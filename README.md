@@ -32,7 +32,7 @@ Adaptations à tcc (le reste est la source d'origine) :
 
 ## Vérifier et installer
 
-`essai.rc` vérifie ce dont nos scripts dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur 7 points avec celui de 9pm.
+`essai.rc` vérifie ce dont nos scripts dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur 8 points avec celui de 9pm (dont les blocs `ifs=… {…}` de tri-mails, victimes du même plantage que les fonctions).
 
     rcsh essai.rc < NUL
 

@@ -39,6 +39,19 @@ $sh ./essai-e.tmp
 if(~ $status '') ko flag-e-statut
 x=`{$sh -c 'fn g { echo dans-g }; g | cat'}
 if(! ~ $"x dans-g) ko fonction-enfant
+# bloc ifs=… {…} dans une fonction, capture d'une fonction (tri-mails)
+echo 'a b' > essai.tmp
+echo 'c d' >> essai.tmp
+fn lignes { cat essai.tmp }
+fn h {
+	ifs='
+' {
+		y=`{lignes}
+	}
+}
+y=()
+h
+if(! ~ $#y 2) ko ifs-bloc
 rm -f essai.tmp essai-e.tmp
 
 if(! ~ $#echecs 0){ echo $#echecs échec'(s)' : $echecs >[1=2]; exit essai }
