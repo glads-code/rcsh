@@ -20,14 +20,35 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 
 `flag e` et le code de sortie (`exit`, échec d'une commande) fonctionnaient déjà.
 
-## Compiler
+## Installer sous Windows
 
-Sous Linux : `./compiler.rc` produit `rcsh.exe` (32 bits, bibliothèque de 9pm liée dedans, sans `9pm2.dll`).
+rcsh remplace celui de 9pm, à installer d'abord :
 
-Il faut le tcc croisé i386-win32, compilé depuis les sources de tinycc (`https://repo.or.cz/tinycc.git`, dans `~/.cache/wak-src/tinycc` par défaut, autre dossier en argument) :
+1. Télécharger [9pm051031.zip](https://9p.io/sources/extra/9pm051031.zip) et vérifier son empreinte (PowerShell) : `(Get-FileHash 9pm051031.zip).Hash` doit donner `9E9281BA379EFDE3E94666E4358D9959971AF9956416D2C858905F9B3E308DD3`.
+2. Extraire l'archive dans `C:\9pm` et ajouter `C:\9pm\bin` au `PATH` de l'utilisateur.
+3. Conseillé : renommer `C:\9pm\bin\tar.exe` en `9tar.exe` (il masque le `tar.exe` de Windows) et copier `9sort.exe` en `sort.exe` (sinon `sort` est celui de Windows).
 
+Compiler `rcsh.exe` sous Debian 13 (32 bits, bibliothèque de 9pm liée dedans, sans `9pm2.dll`). Le tcc croisé se construit une fois depuis les sources de tinycc (dossier attendu par défaut par les scripts : `~/.cache/wak-src/tinycc`, autre dossier en argument) :
+
+    sudo apt install git gcc make 9base
+    git clone https://repo.or.cz/tinycc.git ~/.cache/wak-src/tinycc
+    cd ~/.cache/wak-src/tinycc
     ./configure --targetos=WIN32 --cpu=x86_64 --enable-cross
-    make cross-i386-win32
+    make cross-x86_64-win32 cross-i386-win32
+
+Puis :
+
+    git clone https://github.com/glads-code/rcsh.git
+    cd rcsh
+    ./compiler.rc
+
+Sous Windows, remplacer `C:\9pm\bin\rcsh.exe` par ce `rcsh.exe` (les rcsh enfants sont lancés depuis le `bin` de 9pm) et `C:\9pm\lib\rcmain` par `lib/rcmain` du dépôt. Vérifier dans le dépôt : `rcsh essai.rc < NUL`.
+
+## Debian 13
+
+Rien à installer : le rc de Plan 9 est dans le paquet `9base` (`sudo apt install 9base`). `essai.rc` passe aussi avec lui : `./essai.rc rc < /dev/null`.
+
+## Compilation
 
 Adaptations à tcc (le reste est la source d'origine) :
 - `tcc/` : `lm.h` et `winnetwk.h` (parties utilisées, absentes des en-têtes de tcc), `win.c` (remplace la bibliothèque `win` de 9pm, qui choisissait entre fonctions Unicode et ANSI : Unicode seul), `advapi32.def` et `mpr.def` (tirés des DLL 32 bits de Windows 11 par `tcc -impdef`).
@@ -36,13 +57,11 @@ Adaptations à tcc (le reste est la source d'origine) :
 - `tas.c` : `InterlockedExchange` au lieu d'assembleur MSVC ; `crt.c` : initialisation de la bibliothèque (`DllMain`) appelée au démarrage, puisqu'elle n'est plus une DLL.
 - `src/rcsh/y.tab.c` et `y.tab.h` : générés depuis `syn.y` par le `yacc.exe` de 9pm.
 
-## Vérifier et installer
+## Vérifier
 
 `essai.rc` vérifie ce dont des scripts rc portables dépendent (tubes, fonctions dans les sous-shells, captures, `flag e`, `exit`) ; il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec celui de 9pm (dont les blocs `ifs=… {…}`, victimes du même plantage que les fonctions).
 
     rcsh essai.rc < NUL
-
-Installation : remplacer `C:\9pm\bin\rcsh.exe` par `rcsh.exe` (les rcsh enfants sont lancés depuis `%9pm%\bin`) et `C:\9pm\lib\rcmain` par `lib/rcmain`.
 
 ## Support
 
