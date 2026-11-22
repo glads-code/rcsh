@@ -1,0 +1,45 @@
+#!/usr/bin/env rc
+# Vérifie un rcsh sur ce dont nos scripts dépendent : statut des tubes,
+# fonctions dans les sous-shells, captures, flag e, code de sortie.
+# Sous Windows : rcsh essai.rc < NUL (code de sortie 0 si tout passe).
+# Usage : essai.rc [shell à essayer pour flag e et exit, rcsh par défaut]
+sh=rcsh
+if(~ $#* 1) sh=$1
+echecs=()
+fn ko { echo échec : $1 >[1=2]; echecs=($echecs $1) }
+fn f { echo dans-f $* }
+
+test -f absent | cat
+if(! ~ $status ?*'|') ko tube-gauche
+echo x | test -f absent
+if(! ~ $status '|'?*) ko tube-droit
+echo x | cat > essai.tmp
+if(! ~ $status '|') ko tube-reussi
+vus=()
+for(i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20){
+	test -f absent | cat
+	if(~ $status ?*'|') vus=($vus x)
+}
+if(! ~ $#vus 20) ko tube-gauche-20-fois
+x=`{f a | cat}
+if(! ~ $"x 'dans-f a') ko fonction-dans-tube
+x=`{f b}
+if(! ~ $"x 'dans-f b') ko fonction-dans-capture
+x=`{echo a b c}
+if(! ~ $#x 3) ko capture
+$sh -c 'exit zz'
+if(~ $status '') ko exit
+# flag e ne vaut que pour les lignes lues ensuite : script de trois lignes
+echo 'flag e +' > essai-e.tmp
+echo 'test -f absent' >> essai-e.tmp
+echo 'echo suite' >> essai-e.tmp
+x=`{$sh ./essai-e.tmp}
+if(! ~ $#x 0) ko flag-e
+$sh ./essai-e.tmp
+if(~ $status '') ko flag-e-statut
+x=`{$sh -c 'fn g { echo dans-g }; g | cat'}
+if(! ~ $"x dans-g) ko fonction-enfant
+rm -f essai.tmp essai-e.tmp
+
+if(! ~ $#echecs 0){ echo $#echecs échec'(s)' : $echecs >[1=2]; exit essai }
+echo essai réussi
