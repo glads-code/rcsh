@@ -1,5 +1,5 @@
 #!/usr/bin/env rc
-# Compile rcsh.exe (Windows, 32 bits) sur deb avec le tcc croisé
+# Compile rcsh.exe (Windows, 32 bits) sous Linux avec le tcc croisé
 # i386-win32 : rcsh et la bibliothèque de 9pm liés en un seul exécutable,
 # sans 9pm2.dll. Le résultat, rcsh.exe, remplace celui de 9pm (voir README).
 # Usage : ./compiler.rc [dossier des sources de tinycc]

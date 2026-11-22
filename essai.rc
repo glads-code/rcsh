@@ -1,5 +1,5 @@
 #!/usr/bin/env rc
-# Vérifie un rcsh sur ce dont nos scripts dépendent : statut des tubes,
+# Vérifie un rcsh sur ce dont des scripts rc portables dépendent : statut des tubes,
 # fonctions dans les sous-shells, captures, flag e, code de sortie.
 # Sous Windows : rcsh essai.rc < NUL (code de sortie 0 si tout passe).
 # Usage : essai.rc [shell à essayer pour flag e et exit, rcsh par défaut]
@@ -46,7 +46,7 @@ $sh ./essai-e.tmp
 if(~ $status '') ko flag-e-statut
 x=`{$sh -c 'fn g { echo dans-g }; g | cat'}
 if(! ~ $"x dans-g) ko fonction-enfant
-# bloc ifs=… {…} dans une fonction, capture d'une fonction (tri-mails)
+# bloc ifs=… {…} dans une fonction, capture d'une fonction
 echo 'a b' > essai.tmp
 echo 'c d' >> essai.tmp
 fn lignes { cat essai.tmp }
