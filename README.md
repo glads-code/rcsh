@@ -18,6 +18,8 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 - **`$0` dans les sous-shells** (`main.c`, `lib/rcmain`) : une capture ou un côté de tube relisait `rcmain`, qui fixait `$0` sur lui-même ; `` `{basename -d $0} `` donnait le dossier de 9pm. Le sous-shell (`-S`) garde le `$0` du script.
 - **Redirections** (`exec.c`) : captures, côtés de tubes et sous-shells `@{…}` héritent de l'entrée du script et des redirections en cours (`{ … } > fichier`), comme dans rc ; `` x=`{cat} `` lisait rien, et la sortie d'un `@{…}` échappait au fichier.
 
+- **`>[2=1]` dans une capture** (`pcmd.c`) : le code d'une capture `` `{…} `` ou d'un sous-shell `@{…}` est transmis au rcsh enfant sous forme de texte, reconstruit à partir de l'arbre. Pour `>[2=1]`, seule la redirection était réécrite, sans la commande qu'elle entoure : `` x=`{cmd > f >[2=1] || echo refus} `` revenait vide. La commande suit maintenant la redirection, comme dans le rc de Plan 9.
+
 `flag e` et le code de sortie (`exit`, échec d'une commande) fonctionnaient déjà.
 
 ## Installer sous Windows
@@ -65,9 +67,10 @@ tar -xf tcc-0.9.27-win64-bin.zip -C C:\
 # il ne déclare pas cette fonction, dont le tcc récent a besoin
 Add-Content C:\tcc\lib\kernel32.def AddVectoredExceptionHandler
 # 2. tcc récent (version vérifiée : commit fc1fc50), installé dans C:\tcc-dev
-curl.exe -Lo tinycc.tar.gz https://repo.or.cz/tinycc.git/snapshot/fc1fc50f7a5b3151a8932e9c2adb784140306db4.tar.gz
+# miroir GitHub officiel (repo.or.cz bloque les téléchargements automatiques)
+curl.exe -Lo tinycc.tar.gz https://github.com/TinyCC/tinycc/archive/fc1fc50f7a5b3151a8932e9c2adb784140306db4.tar.gz
 tar -xzf tinycc.tar.gz
-cd tinycc-fc1fc50\win32
+cd tinycc-fc1fc50f7a5b3151a8932e9c2adb784140306db4\win32
 cmd /c "build-tcc.bat -c C:\tcc\tcc.exe -i C:\tcc-dev"            # tcc.exe, 64 bits
 cmd /c "build-tcc.bat -c C:\tcc\tcc.exe -i C:\tcc-dev -x i386"    # i386-win32-tcc.exe, 32 bits (pour rcsh)
 C:\tcc-dev\tcc.exe -v   # tcc version 0.9.28rc (x86_64 Windows)
@@ -102,7 +105,6 @@ Il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des poin
 
     rcsh essai.rc < NUL
 
-Limite connue : dans une capture `` `{…} `` ou un sous-shell `@{…}`, une commande redirigée avec `>[2=1]` (dans un ordre comme dans l'autre) puis suivie de `||` fait revenir la capture vide : `` x=`{cmd > f >[2=1] || echo refus} `` laisse `x` vide au lieu de `refus`. Hors capture, ou sans `||`, `>[2=1]` fonctionne comme sous Linux. Contournement : écrire stderr dans un fichier à part (`>[2]erreurs`).
 
 ## Support
 
