@@ -188,6 +188,10 @@ proc(char **argv, int stdin, int stdout, int stderr, char **envp)
 		for(n=0; argv[n]; n++)
 			;
 		wstrtoutf(buf, path, MAX_PATH);
+		/* $0 du script avec des / (basename -d, chemins rc) */
+		for(p=buf; *p; p++)
+			if(*p == '\\')
+				*p = '/';
 		rcargv = malloc((n+3)*sizeof(char**));
 		rcargv[0] = "rcsh";
 		rcargv[1] = "-I";
@@ -227,14 +231,21 @@ proc(char **argv, int stdin, int stdout, int stderr, char **envp)
 int
 execpath(Rune *path, char *file)
 {
-	Rune *p;
+	Rune *p, *base;
+	DWORD a;
 
 	if(setpath(path, file) != Pfile)
 		return -1;
 
-	p = wstrrchr(path, '.');
+	/* extension : dans le dernier élément du chemin seulement */
+	base = path;
+	for(p=path; *p; p++)
+		if(*p == '/' || *p == '\\')
+			base = p+1;
+	p = wstrrchr(base, '.');
 	if(p) {
-		if(wstrcmp(p, L".rcs") == 0)
+		/* .rc comme .rcs : scripts rc des dépôts, lancés par rcsh */
+		if(wstrcmp(p, L".rcs") == 0 || wstrcmp(p, L".rc") == 0)
 		if(GetFileAttributes(path) != -1)
 			return Ercs;
 		if(GetFileAttributes(path) != -1)
@@ -247,6 +258,13 @@ execpath(Rune *path, char *file)
 	wstrecpy(p, L".rcs", path+MAX_PATH);
 	if(GetFileAttributes(path) != -1)
 		return Ercs;
+	*p = 0;
+	/* fichier sans extension (tri-mails, visibilite-ia…) : script rc */
+	if(wstrrchr(base, '.') == 0) {
+		a = GetFileAttributes(path);
+		if(a != (DWORD)-1 && !(a & FILE_ATTRIBUTE_DIRECTORY))
+			return Ercs;
+	}
 	return -1;
 }
 
