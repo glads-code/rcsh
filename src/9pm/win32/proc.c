@@ -14,6 +14,62 @@ static  BOOL WINAPI handler(DWORD a);
 static	Qlock	proclk;
 static	void	(*handlerfunc)(void);
 
+/*
+ * Handles des processus lancés par proc(), gardés jusqu'à procwait().
+ * Sans eux, un enfant qui a fini avant l'attente (le côté gauche d'un
+ * tube, le plus souvent) n'existe plus pour OpenProcess, et son code de
+ * sortie est perdu. Table pleine (processus jamais attendus, lancés
+ * avec &) : la plus vieille entrée est remplacée.
+ */
+enum {
+	Nenfant	= 1024,
+};
+
+static struct {
+	uint	pid;
+	HANDLE	h;
+} enfant[Nenfant];
+static	int	prochain;
+static	Qlock	enfantlk;
+
+static void
+garder(uint pid, HANDLE h)
+{
+	int i;
+
+	qlock(&enfantlk);
+	for(i=0; i<Nenfant; i++)
+		if(enfant[i].pid == 0)
+			break;
+	if(i == Nenfant) {
+		i = prochain;
+		prochain = (prochain+1) % Nenfant;
+		CloseHandle(enfant[i].h);
+	}
+	enfant[i].pid = pid;
+	enfant[i].h = h;
+	qunlock(&enfantlk);
+}
+
+static HANDLE
+reprendre(uint pid)
+{
+	int i;
+	HANDLE h;
+
+	h = 0;
+	qlock(&enfantlk);
+	for(i=0; i<Nenfant; i++)
+		if(enfant[i].pid == pid) {
+			h = enfant[i].h;
+			enfant[i].pid = 0;
+			enfant[i].h = 0;
+			break;
+		}
+	qunlock(&enfantlk);
+	return h;
+}
+
 
 int	consintrbug;
 
@@ -163,7 +219,7 @@ proc(char **argv, int stdin, int stdout, int stderr, char **envp)
 	}
 
 	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
+	garder(pi.dwProcessId, pi.hProcess);
 	
 	return pi.dwProcessId;
 }
@@ -269,12 +325,14 @@ procwait(uint pid, double t[3])
 	if(pid == 0)
 		return 0;
 
-	h = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+	h = reprendre(pid);
+	if(h == 0)
+		h = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
 	if(h == 0) {
-/*		fatal(L"race %d", pid); */
+		/* processus introuvable : échec plutôt qu'un succès inventé */
 		if(t)
 			t[0] = t[1] = t[2] = 0.0;
-		return 0;	/* race condition - should do better */
+		return 1;
 	}
 
 	if(WaitForSingleObject(h, INFINITE) == WAIT_FAILED) {
