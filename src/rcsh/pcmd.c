@@ -72,6 +72,7 @@ pcmd(Io *f, Tree *t)
 			pfmt(f, "%d", t->fd1);
 		/* else t->rtype == CLOSE */
 		pchr(f, ']');
+		if(c1) pfmt(f, " %t", c1);	/* la commande redirigée */
 		break;
 	case PIPEFD:
 	case REDIR:

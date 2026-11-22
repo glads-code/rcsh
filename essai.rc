@@ -59,6 +59,11 @@ fn h {
 y=()
 h
 if(! ~ $#y 2) ko ifs-bloc
+# >[2=1] dans une capture : le rcsh enfant reçoit toute la commande
+x=`{test -f absent > essai.tmp >[2=1] || echo refus}
+if(! ~ $"x refus) ko dup-capture
+x=`{@{test -f absent >[2=1] > essai.tmp} || echo refus}
+if(! ~ $"x refus) ko dup-sous-shell
 # commande introuvable : un échec
 commande-introuvable-essai >[2=1] > essai.tmp
 if(~ $status '') ko commande-absente
@@ -72,7 +77,8 @@ if(! ~ $"x 'par-nom a') ko script-rc
 x=`{./essai-sx b}
 if(! ~ $"x 'par-nom b') ko script-sans-extension
 # $0 d'un script lancé par son nom : basename -d donne son dossier
-mkdir -p essai-dossier
+rm -rf essai-dossier
+mkdir essai-dossier
 echo '#!/usr/bin/env rc' > essai-dossier/d.rc
 echo 'if(test -d /usr/lib/plan9/bin) path=(/usr/lib/plan9/bin $path)' >> essai-dossier/d.rc
 echo 'cd `{basename -d $0}; if(test -f d.rc) echo dossier-ok' >> essai-dossier/d.rc
