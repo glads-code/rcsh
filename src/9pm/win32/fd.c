@@ -88,6 +88,32 @@ fdinit(void)
 }
 
 
+/* /dev/null : périphérique NUL de Windows (la bibliothèque n'avait que les
+ * descripteurs 0 à 2 en « devnull », sans nom de fichier). */
+static int
+opennul(int mode)
+{
+	HANDLE h;
+	File *f;
+
+	h = CreateFile(L"\\\\.\\NUL", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+	if(h == INVALID_HANDLE_VALUE) {
+		winerror();
+		return -1;
+	}
+	if((f = filealloc()) == 0) {
+		CloseHandle(h);
+		return -1;
+	}
+	f->type = Tfile;
+	f->h = h;
+	f->mode = mode;
+	f->path = 0;
+	memset(&f->qid, 0, sizeof f->qid);
+	qunlock(&f->lk);
+	return f-fdtbl;
+}
+
 int
 open(char *file, int mode)
 {
@@ -102,6 +128,8 @@ open(char *file, int mode)
 		return dup(1, -1);
 	if(strcmp(file, "stderr$") == 0)
 		return dup(2, -1);
+	if(strcmp(file, "/dev/null") == 0)
+		return opennul(mode);
 
 	t = setpath(path, file);
 	
@@ -188,6 +216,8 @@ create(char *file, int mode, ulong perm)
 	File *f;
 	HANDLE h;
 
+	if(strcmp(file, "/dev/null") == 0)
+		return opennul(mode);
 	t = setpath(path, file);
 	if(t == Pbad)
 		return -1;

@@ -39,6 +39,11 @@ a $v
 FIN
 x=`{cat essai.tmp}
 if(! ~ $"x 'a $v') ko here-sans-substitution
+# /dev/null en écriture et en lecture, $home = $HOME
+echo perdu > /dev/null
+x=`{cat < /dev/null}
+if(! ~ $#x 0) ko dev-null
+if(! ~ $home $HOME) ko home
 # une capture lit l'entrée standard du script, comme dans rc
 x=`{echo 'l1 l2' | { z=`{cat}; echo $#z }}
 if(! ~ $"x 2) ko capture-entree

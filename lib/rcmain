@@ -1,5 +1,6 @@
 # rcmain: 9pm version
 if(~ $#home 0) home=/
+if(! ~ $#HOME 0) home=$HOME
 if(~ $#ifs 0) ifs=' 	
 '
 switch($#prompt){
