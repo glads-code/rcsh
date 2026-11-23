@@ -1,0 +1,3 @@
+# jq en binaire (-b) : sous Windows, jq.exe (renommé jq-exe.exe à
+# l'installation) écrit ses lignes en CRLF, et le \r finit dans les données.
+jq-exe -b $*

@@ -1,0 +1,12 @@
+# unzip sous Windows, par le tar.exe de Windows (bsdtar lit les zip).
+# Seules formes utilisées : unzip -oq archive.zip (extraire en écrasant)
+# et unzip -Z1 archive.zip (liste des noms, un par ligne).
+switch($1){
+case -oq
+	tar -xf $2
+case -Z1
+	tar -tf $2
+case *
+	echo 'unzip : seuls -oq et -Z1 sont pris en charge' >[1=2]
+	exit usage
+}

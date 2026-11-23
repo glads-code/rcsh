@@ -1,0 +1,3 @@
+# pass sous Windows : le coffre ~/.password-store se lit avec gopass
+# (même format). Seul « pass show » sert dans les scripts.
+gopass $*

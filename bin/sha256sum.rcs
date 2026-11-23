@@ -1,0 +1,47 @@
+# sha256sum sous Windows, par certutil, au format de coreutils :
+#   sha256sum fichier...              « empreinte  fichier », une ligne par fichier
+#   sha256sum -c [--quiet] [liste|-]  vérifie une liste « empreinte  fichier »
+# Vérification comme coreutils : « fichier: OK » (sauf --quiet) ou
+# « fichier: FAILED », et échec si une empreinte diffère ou manque.
+fn empreinte {
+	h=`{certutil -hashfile $1 SHA256 | wak 'NR == 2 { gsub(/[ \r]/, ""); print tolower($0) }'}
+	if(~ $#h 1 && ~ $h [0-9a-f]*) echo $h
+	if not status=certutil
+}
+verifier=()
+quiet=()
+while(~ $1 -c --quiet){
+	if(~ $1 -c) verifier=1
+	if(~ $1 --quiet) quiet=1
+	shift
+}
+if(~ $#verifier 0){
+	for(f in $*){
+		h=`{empreinte $f}
+		if(! ~ $#h 1){ echo sha256sum: $f : illisible >[1=2]; exit certutil }
+		echo $h^'  '^$f
+	}
+	exit
+}
+if(~ $#* 0 || ~ $1 -) ifs='
+' lignes=`{cat}
+if not ifs='
+' lignes=`{cat $1}
+echecs=()
+for(l in $lignes){
+	attendu=`{echo $l | wak '{ print tolower($1) }'}
+	f=`{echo $l | wak '{ sub(/^[^ ]+ [ *]?/, ""); print }'}
+	h=`{empreinte $f}
+	if(~ $#h 1 && ~ $h $attendu){
+		if(~ $#quiet 0) echo $f^': OK'
+	}
+	if not {
+		echo $f^': FAILED'
+		echecs=($echecs x)
+	}
+}
+if(! ~ $#echecs 0){
+	echo 'sha256sum: ATTENTION :' $#echecs 'empreinte(s) différente(s)' >[1=2]
+	exit FAILED
+}
+status=''

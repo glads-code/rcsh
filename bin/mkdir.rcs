@@ -1,0 +1,16 @@
+# mkdir avec -p (celui de 9pm, renommé 9mkdir, n'a pas l'option) :
+# crée aussi les dossiers parents, sans erreur si le dossier existe.
+fn creer {
+	if(! test -d $1){
+		parent=`{basename -d $1}
+		if(! ~ $parent $1 .) creer $parent
+		9mkdir $1
+	}
+	status=''
+}
+if(! ~ $1 -p){
+	9mkdir $*
+	exit
+}
+shift
+for(d in $*) creer $d

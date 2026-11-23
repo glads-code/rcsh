@@ -1,0 +1,8 @@
+# du avec -s (celui de 9pm, renommé 9du, n'a pas l'option et affiche
+# chaque sous-dossier) : -s ne garde que le total, sa dernière ligne.
+if(! ~ $1 -s){
+	9du $*
+	exit
+}
+shift
+for(d in $*) 9du $d | wak 'END { print }'

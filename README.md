@@ -57,6 +57,25 @@ Copy-Item -Force lib\rcmain C:\9pm\lib\rcmain
 
 Vérifier, dans une nouvelle fenêtre (pour le `PATH`), dans le dossier du dépôt : `cmd /c "rcsh essai.rc < NUL"` affiche `essai réussi`. Le `rcsh.exe` doit avoir quitté le dossier du dépôt : sinon cmd lance celui-là, qui ne trouve pas `rcmain`.
 
+### Outils manquants (`bin/`)
+
+Scripts rc qui comblent, pour des scripts portables entre Linux et Windows, ce que ni 9pm ni Windows n'offrent tel quel. rcsh lance un `.rcs` du `PATH` par son nom (`mkdir -p` lance `mkdir.rcs`) : les copier dans `C:\9pm\bin`.
+
+| Script | Rôle | Prérequis |
+|---|---|---|
+| `mkdir.rcs` | ajoute `-p` | `mkdir.exe` de 9pm renommé `9mkdir.exe` |
+| `du.rcs` | ajoute `-s` | `du.exe` de 9pm renommé `9du.exe` |
+| `sha256sum.rcs` | format de coreutils, création et vérification (`-c`, `--quiet`), par `certutil` | wak |
+| `unzip.rcs` | `-oq` et `-Z1`, par le `tar.exe` de Windows | `tar.exe` de 9pm renommé (voir plus haut) |
+| `jq.rcs` | jq sans CRLF (`-b`) | `jq.exe` renommé `jq-exe.exe` |
+| `pass.rcs` | `pass show` par gopass (même coffre) | gopass |
+
+```powershell
+Rename-Item C:\9pm\bin\mkdir.exe 9mkdir.exe
+Rename-Item C:\9pm\bin\du.exe 9du.exe
+Copy-Item bin\*.rcs C:\9pm\bin\
+```
+
 ### Installer tcc sous Windows
 
 Le tcc officiel pour Windows (0.9.27, 2017) est trop ancien pour ces sources (il lui manque `unistd.h`, entre autres) : il sert seulement à compiler un tcc récent, depuis les sources de tinycc. Dans PowerShell :
