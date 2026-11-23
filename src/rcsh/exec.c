@@ -292,16 +292,7 @@ Xdelfn(void)
 void
 Xdelhere(void)
 {
-	Var *v;
-	Word *a;
-
-	for(a=runq->argv->words;a;a=a->next){
-		v=gvlook(a->word);
-		if(v->fn) codefree(v->fn);
-		v->fn=0;
-		v->fnchanged=1;
-	}
-	poplist();
+	remove(runq->code[runq->pc++].s);
 }
 
 void

@@ -49,7 +49,7 @@ compile(Tree *t)
 		free(codebuf);
 		return 0;
 	}
-/*	readhere(); */
+	readhere();
 	emitf(Xreturn);
 	emitf(0);
 	return 1;
