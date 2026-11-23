@@ -485,7 +485,8 @@ dblquote(Rune *cmd, char *s)
 		if(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || *p == '"')
 			break;
 
-	if(*p == 0) {
+	/* mot vide : sans "", il disparaît de la ligne de commande */
+	if(*p == 0 && p != s) {
 		/* easy case */
 		while(*s)
 			s += chartorune(cmd++, s);

@@ -21,6 +21,7 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 - **`/dev/null` et `$home`** (`fd.c`, `lib/rcmain`) : `> /dev/null` échouait (« chemin introuvable ») : le nom est maintenant le périphérique NUL de Windows. `$home` valait `/` : les scripts qui écrivent `$home/.local/…` (tri-mails) créaient `//.local` ; il reprend `$HOME`.
 
 - **`>[2=1]` dans une capture** (`pcmd.c`) : le code d'une capture `` `{…} `` ou d'un sous-shell `@{…}` est transmis au rcsh enfant sous forme de texte, reconstruit à partir de l'arbre. Pour `>[2=1]`, seule la redirection était réécrite, sans la commande qu'elle entoure : `` x=`{cmd > f >[2=1] || echo refus} `` revenait vide. La commande suit maintenant la redirection, comme dans le rc de Plan 9.
+- **Argument vide** (`proc.c`) : un mot vide (`''`) disparaissait de la ligne de commande passée à `CreateProcess`, et décalait les suivants (`claude -p --tools ''` : « argument missing »). Il est maintenant écrit `""`.
 
 `flag e` et le code de sortie (`exit`, échec d'une commande) fonctionnaient déjà.
 
@@ -103,6 +104,7 @@ Rien à installer : le rc de Plan 9 est dans le paquet `9base` (`sudo apt instal
 - **Scripts lancés par leur nom**, avec ou sans extension `.rc`, et `basename -d $0` qui donne leur dossier.
 - **Commande introuvable** : comptée comme un échec.
 - **Here-documents** : `cmd <<FIN` et `<<'FIN'` (sans substitution).
+- **Argument vide** : `''` passé à un programme garde sa place.
 - **`/dev/null`** en lecture et en écriture, et `$home` égal à `$HOME`.
 
 Il passe avec le rc de 9base et avec ce rcsh, et échoue sur la plupart des points avec le rcsh d'origine de 9pm.

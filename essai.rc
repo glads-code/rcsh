@@ -103,6 +103,9 @@ chmod +x essai-dossier/d.rc
 x=`{./essai-dossier/d.rc}
 if(! ~ $"x dossier-ok) ko dossier-du-script
 rm -rf essai-dossier
+# mot vide passé à un programme : il garde sa place ("" sous Windows)
+x=`{$sh -c 'echo $#*' a '' b}
+if(! ~ $x 3) ko argument-vide
 rm -f essai.tmp essai-e.tmp essai-s.rc essai-sx
 
 if(! ~ $#echecs 0){ echo $#echecs échec'(s)' : $echecs >[1=2]; exit essai }
