@@ -18,7 +18,7 @@ Le `rcsh.exe` de 9pm rend les scripts dangereux : un échec peut passer inaperç
 - **`$0` dans les sous-shells** (`main.c`, `lib/rcmain`) : une capture ou un côté de tube relisait `rcmain`, qui fixait `$0` sur lui-même ; `` `{basename -d $0} `` donnait le dossier de 9pm. Le sous-shell (`-S`) garde le `$0` du script.
 - **Redirections** (`exec.c`) : captures, côtés de tubes et sous-shells `@{…}` héritent de l'entrée du script et des redirections en cours (`{ … } > fichier`), comme dans rc ; `` x=`{cat} `` lisait rien, et la sortie d'un `@{…}` échappait au fichier.
 - **Here-documents** (`code.c`, `exec.c`) : `cmd <<FIN` échouait (« fichier introuvable ») : le texte n'était jamais lu (`readhere` en commentaire) et `Xdelhere`, qui doit supprimer le fichier temporaire du here-document, copiait `Xdelfn`. `check.rc` de srv-docker en dépend. Limite : un here-document sur le côté gauche d'un tube (`cmd <<FIN | autre`) échoue encore.
-- **`/dev/null` et `$home`** (`fd.c`, `lib/rcmain`) : `> /dev/null` échouait (« chemin introuvable ») : le nom est maintenant le périphérique NUL de Windows. `$home` valait `/` : les scripts qui écrivent `$home/.local/…` (tri-mails) créaient `//.local` ; il reprend `$HOME`.
+- **`/dev/null` et `$home`** (`fd.c`, `lib/rcmain`) : `> /dev/null` échouait (« chemin introuvable ») : le nom est maintenant le périphérique NUL de Windows. `$home` valait `/` : les scripts qui écrivent `$home/.local/…` (tri-mails) créaient `//.local` ; il reprend `$HOME`, ou `%USERPROFILE%` quand `HOME` manque (session Windows ordinaire : seul sshd définit `HOME`). `$home` étant exporté, il donne aussi `HOME` aux programmes lancés : avec `/`, ssh ne trouvait plus `~/.ssh` (ni config, ni agent).
 
 - **`>[2=1]` dans une capture** (`pcmd.c`) : le code d'une capture `` `{…} `` ou d'un sous-shell `@{…}` est transmis au rcsh enfant sous forme de texte, reconstruit à partir de l'arbre. Pour `>[2=1]`, seule la redirection était réécrite, sans la commande qu'elle entoure : `` x=`{cmd > f >[2=1] || echo refus} `` revenait vide. La commande suit maintenant la redirection, comme dans le rc de Plan 9.
 - **Argument vide** (`proc.c`) : un mot vide (`''`) disparaissait de la ligne de commande passée à `CreateProcess`, et décalait les suivants (`claude -p --tools ''` : « argument missing »). Il est maintenant écrit `""`.
@@ -56,6 +56,8 @@ Copy-Item -Force lib\rcmain C:\9pm\lib\rcmain
 ```
 
 Vérifier, dans une nouvelle fenêtre (pour le `PATH`), dans le dossier du dépôt : `cmd /c "rcsh essai.rc < NUL"` affiche `essai réussi`. Le `rcsh.exe` doit avoir quitté le dossier du dépôt : sinon cmd lance celui-là, qui ne trouve pas `rcmain`.
+
+Ne pas utiliser le `chmod` de 9pm : il réécrit les droits NTFS et, hors élévation, ne laisse au propriétaire que l'exécution (le fichier devient illisible). Windows n'a pas besoin du bit x pour lancer un script rc.
 
 ### Outils manquants (`bin/`)
 

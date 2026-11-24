@@ -39,11 +39,12 @@ a $v
 FIN
 x=`{cat essai.tmp}
 if(! ~ $"x 'a $v') ko here-sans-substitution
-# /dev/null en écriture et en lecture, $home = $HOME
+# /dev/null en écriture et en lecture, $home = $HOME, ou %USERPROFILE% sans HOME
 echo perdu > /dev/null
 x=`{cat < /dev/null}
 if(! ~ $#x 0) ko dev-null
-if(! ~ $home $HOME) ko home
+if(! ~ $#HOME 0){ if(! ~ $home $HOME) ko home }
+if not if(! ~ $home $USERPROFILE) ko home-userprofile
 # une capture lit l'entrée standard du script, comme dans rc
 x=`{echo 'l1 l2' | { z=`{cat}; echo $#z }}
 if(! ~ $"x 2) ko capture-entree
@@ -88,7 +89,8 @@ if(~ $status '') ko commande-absente
 echo '#!/usr/bin/env rc' > essai-s.rc
 echo 'echo par-nom $1' >> essai-s.rc
 cp essai-s.rc essai-sx
-chmod +x essai-s.rc essai-sx
+# chmod inutile sous Windows, et celui de 9pm ôte la lecture hors élévation
+if(~ $#USERPROFILE 0) chmod +x essai-s.rc essai-sx
 x=`{./essai-s.rc a}
 if(! ~ $"x 'par-nom a') ko script-rc
 x=`{./essai-sx b}
@@ -99,7 +101,7 @@ mkdir essai-dossier
 echo '#!/usr/bin/env rc' > essai-dossier/d.rc
 echo 'if(test -d /usr/lib/plan9/bin) path=(/usr/lib/plan9/bin $path)' >> essai-dossier/d.rc
 echo 'cd `{basename -d $0}; if(test -f d.rc) echo dossier-ok' >> essai-dossier/d.rc
-chmod +x essai-dossier/d.rc
+if(~ $#USERPROFILE 0) chmod +x essai-dossier/d.rc
 x=`{./essai-dossier/d.rc}
 if(! ~ $"x dossier-ok) ko dossier-du-script
 rm -rf essai-dossier

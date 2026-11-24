@@ -1,6 +1,9 @@
 # rcmain: 9pm version
 if(~ $#home 0) home=/
+# HOME n'existe pas dans une session Windows ordinaire (sshd seul le définit) :
+# $home, exporté, devient HOME pour les programmes lancés (ssh y lit ~/.ssh)
 if(! ~ $#HOME 0) home=$HOME
+if not if(! ~ $#USERPROFILE 0) home=$USERPROFILE
 if(~ $#ifs 0) ifs=' 	
 '
 switch($#prompt){
