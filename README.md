@@ -57,7 +57,7 @@ Copy-Item -Force lib\rcmain C:\9pm\lib\rcmain
 
 Vérifier, dans une nouvelle fenêtre (pour le `PATH`), dans le dossier du dépôt : `cmd /c "rcsh essai.rc < NUL"` affiche `essai réussi`. Le `rcsh.exe` doit avoir quitté le dossier du dépôt : sinon cmd lance celui-là, qui ne trouve pas `rcmain`.
 
-Ne pas utiliser le `chmod` de 9pm : il réécrit les droits NTFS et, hors élévation, ne laisse au propriétaire que l'exécution (le fichier devient illisible). Windows n'a pas besoin du bit x pour lancer un script rc.
+Ne pas utiliser le `chmod` de 9pm (voir [docs/pieges.md](docs/pieges.md), avec les autres pièges de rc, de rcsh et des outils de 9pm et de 9base pour écrire des scripts qui tournent à l'identique sous Linux et Windows).
 
 ### Outils manquants (`bin/`)
 
